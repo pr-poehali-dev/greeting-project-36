@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+interface User {
+  id: number;
+  email: string;
+  phone: string;
+  full_name: string;
+}
 
 interface Ticket {
   id: string;
@@ -100,6 +108,8 @@ const categoryData = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [promos, setPromos] = useState<Promo[]>([
@@ -113,6 +123,18 @@ const Index = () => {
   const [newEventDate, setNewEventDate] = useState('');
   const [newEventLocation, setNewEventLocation] = useState('');
   const [newEventCategory, setNewEventCategory] = useState('');
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
 
   const [newPromoCode, setNewPromoCode] = useState('');
   const [newPromoDiscount, setNewPromoDiscount] = useState('');
@@ -220,26 +242,27 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Icon name="User" size={20} />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Профиль</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Icon name="User" size={32} className="text-primary" />
+              {user ? (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Icon name="User" size={20} />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Профиль</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Icon name="User" size={32} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">{user.full_name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold">Александр Иванов</p>
-                        <p className="text-sm text-muted-foreground">alex@example.com</p>
-                      </div>
-                    </div>
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Статистика</p>
                       <div className="grid grid-cols-2 gap-4">
@@ -253,9 +276,19 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
+                    <Button variant="outline" onClick={handleLogout} className="w-full">
+                      <Icon name="LogOut" size={18} className="mr-2" />
+                      Выйти
+                    </Button>
                   </div>
                 </DialogContent>
               </Dialog>
+              ) : (
+                <Button variant="outline" onClick={() => navigate('/auth')}>
+                  <Icon name="LogIn" size={18} className="mr-2" />
+                  Войти
+                </Button>
+              )}
 
               <Sheet>
                 <SheetTrigger asChild>
