@@ -11,6 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
+
+const ORDERS_API_URL = 'https://functions.poehali.dev/1c44ecd2-af19-46df-b9a6-48f722a5f594';
 
 interface User {
   id: number;
@@ -110,6 +113,7 @@ const categoryData = [
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [events, setEvents] = useState<Event[]>(mockEvents);
@@ -124,6 +128,12 @@ const Index = () => {
   const [newEventDate, setNewEventDate] = useState('');
   const [newEventLocation, setNewEventLocation] = useState('');
   const [newEventCategory, setNewEventCategory] = useState('');
+
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutFullName, setCheckoutFullName] = useState('');
+  const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
+  const [orderLoading, setOrderLoading] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -228,6 +238,55 @@ const Index = () => {
     setPromos(promos.map(promo =>
       promo.id === id ? { ...promo, active: !promo.active } : promo
     ));
+  };
+
+  const handleCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOrderLoading(true);
+
+    try {
+      const response = await fetch(ORDERS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: checkoutFullName,
+          email: checkoutEmail,
+          phone: checkoutPhone,
+          cart_items: cart,
+          total_amount: cartTotal
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: 'Заказ оформлен!',
+          description: data.email_sent 
+            ? `Билеты отправлены на ${checkoutEmail}` 
+            : 'Заказ создан, проверьте настройки SMTP для отправки билетов'
+        });
+        setCart([]);
+        setShowCheckout(false);
+        setCheckoutFullName('');
+        setCheckoutEmail('');
+        setCheckoutPhone('');
+      } else {
+        toast({
+          title: 'Ошибка оформления',
+          description: data.error || 'Не удалось оформить заказ',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось подключиться к серверу',
+        variant: 'destructive'
+      });
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   return (
@@ -361,10 +420,74 @@ const Index = () => {
                             <span>Итого:</span>
                             <span>{cartTotal} ₽</span>
                           </div>
-                          <Button className="w-full" size="lg">
-                            Оформить заказ
-                            <Icon name="ArrowRight" size={18} className="ml-2" />
-                          </Button>
+                          <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
+                            <DialogTrigger asChild>
+                              <Button className="w-full" size="lg">
+                                Оформить заказ
+                                <Icon name="ArrowRight" size={18} className="ml-2" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Оформление заказа</DialogTitle>
+                              </DialogHeader>
+                              <form onSubmit={handleCheckout} className="space-y-4 mt-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="checkout-name">ФИО</Label>
+                                  <Input
+                                    id="checkout-name"
+                                    type="text"
+                                    placeholder="Иван Иванов"
+                                    value={checkoutFullName}
+                                    onChange={(e) => setCheckoutFullName(e.target.value)}
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="checkout-email">Email</Label>
+                                  <Input
+                                    id="checkout-email"
+                                    type="email"
+                                    placeholder="your@email.com"
+                                    value={checkoutEmail}
+                                    onChange={(e) => setCheckoutEmail(e.target.value)}
+                                    required
+                                  />
+                                  <p className="text-xs text-muted-foreground">Билеты будут отправлены на этот email</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="checkout-phone">Номер телефона</Label>
+                                  <Input
+                                    id="checkout-phone"
+                                    type="tel"
+                                    placeholder="+7 999 123-45-67"
+                                    value={checkoutPhone}
+                                    onChange={(e) => setCheckoutPhone(e.target.value)}
+                                    required
+                                  />
+                                </div>
+                                <div className="border-t pt-4">
+                                  <div className="flex justify-between mb-4">
+                                    <span className="font-semibold">Итого к оплате:</span>
+                                    <span className="font-bold text-lg text-primary">{cartTotal} ₽</span>
+                                  </div>
+                                  <Button type="submit" className="w-full" size="lg" disabled={orderLoading}>
+                                    {orderLoading ? (
+                                      <>
+                                        <Icon name="Loader2" className="mr-2 animate-spin" size={18} />
+                                        Оформление...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Icon name="Check" size={18} className="mr-2" />
+                                        Подтвердить заказ
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </>
                     )}

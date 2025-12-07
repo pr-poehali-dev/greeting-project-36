@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "Create order successfully",
+      "method": "POST",
+      "body": {
+        "full_name": "Иван Иванов",
+        "email": "test@example.com",
+        "phone": "+7 999 123-45-67",
+        "cart_items": [
+          {
+            "eventTitle": "Концерт",
+            "ticketType": "VIP",
+            "price": 5000,
+            "quantity": 2
+          }
+        ],
+        "total_amount": 10000
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "order_number": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing required fields",
+      "method": "POST",
+      "body": {
+        "email": "test@example.com"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
