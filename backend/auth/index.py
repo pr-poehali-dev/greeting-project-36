@@ -214,7 +214,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             password_hash = hash_password(password)
             cur.execute(
-                """SELECT id, email, phone, full_name, is_verified 
+                """SELECT id, email, phone, full_name, is_verified, role 
                 FROM t_p613096_greeting_project_36.users 
                 WHERE email = %s AND password_hash = %s""",
                 (email, password_hash)
@@ -246,7 +246,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'id': user['id'],
                         'email': user['email'],
                         'phone': user['phone'],
-                        'full_name': user['full_name']
+                        'full_name': user['full_name'],
+                        'role': user['role']
                     }
                 }),
                 'isBase64Encoded': False

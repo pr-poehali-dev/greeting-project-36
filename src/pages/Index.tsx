@@ -17,6 +17,7 @@ interface User {
   email: string;
   phone: string;
   full_name: string;
+  role: string;
 }
 
 interface Ticket {
@@ -371,17 +372,18 @@ const Index = () => {
                 </SheetContent>
               </Sheet>
 
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Icon name="Settings" size={20} />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Административная панель</DialogTitle>
-                  </DialogHeader>
-                  <Tabs defaultValue="events" className="mt-4">
+              {user && user.role === 'admin' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Icon name="Settings" size={20} />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Административная панель</DialogTitle>
+                    </DialogHeader>
+                    <Tabs defaultValue="events" className="mt-4">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="events">Мероприятия</TabsTrigger>
                       <TabsTrigger value="promos">Промокоды</TabsTrigger>
@@ -577,6 +579,7 @@ const Index = () => {
                   </Tabs>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
           </div>
         </div>
